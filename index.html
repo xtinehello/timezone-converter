@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TV Show Time Zone Converter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f4f3ef;
+    --color-background-info: #e6f1fb;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #5f5e5a;
+    --color-text-tertiary: #888780;
+    --color-text-info: #185fa5;
+    --color-border-tertiary: rgba(0,0,0,0.12);
+    --color-border-secondary: rgba(0,0,0,0.22);
+    --color-border-info: #378add;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --font-sans: system-ui, -apple-system, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background-primary: #1e1e1c;
+      --color-background-secondary: #2a2a27;
+      --color-background-info: #0c2e4a;
+      --color-text-primary: #f0ede8;
+      --color-text-secondary: #a0a09a;
+      --color-text-tertiary: #6a6a65;
+      --color-text-info: #85b7eb;
+      --color-border-tertiary: rgba(255,255,255,0.1);
+      --color-border-secondary: rgba(255,255,255,0.2);
+      --color-border-info: #378add;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-lg);
+    border: 0.5px solid var(--color-border-tertiary);
+    padding: 1.75rem 2rem 2rem;
+  }
+
+  h1 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .tz-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 0.75rem; }
+  .tz-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 0.875rem 1rem; }
+  .tz-card.source { border: 2px solid var(--color-border-info); }
+  .tz-card.sub { border-left: 3px solid var(--color-border-secondary); }
+  .tz-label { font-size: 11px; color: var(--color-text-secondary); margin: 0 0 3px; }
+  .tz-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin: 0 0 6px; }
+  .tz-time { font-size: 21px; font-weight: 500; color: var(--color-text-primary); margin: 0; }
+  .tz-ampm { font-size: 12px; color: var(--color-text-secondary); margin-left: 2px; }
+  .tz-day { font-size: 11px; color: var(--color-text-secondary); margin: 2px 0 0; }
+  .controls { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+  .ctrl-group label { font-size: 12px; color: var(--color-text-secondary); }
+  select, input[type="time"] { height: 36px; padding: 0 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 14px; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); background: var(--color-background-info); color: var(--color-text-info); margin-bottom: 4px; }
+  .copy-btn { font-size: 12px; padding: 0 12px; height: 36px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); cursor: pointer; font-family: var(--font-sans); }
+  .copy-btn:hover { background: var(--color-background-secondary); }
+  .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1rem 0 0; }
+  .section-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.05em; text-transform: uppercase; margin: 1rem 0 0.5rem; }
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+  .toggle-track { width: 44px; height: 24px; border-radius: 12px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-track.on { background: var(--color-background-info); border-color: var(--color-border-info); }
+  .toggle-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--color-text-secondary); position: absolute; top: 2px; left: 3px; transition: left 0.2s, background 0.2s; }
+  .toggle-track.on .toggle-thumb { left: 23px; background: var(--color-text-info); }
+  .toggle-label { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .dst-note { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .no-dst-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: var(--border-radius-md); background: var(--color-background-secondary); color: var(--color-text-tertiary); margin-left: 4px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>TV Show Time Zone Converter</h1>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Broadcast time</label>
+      <input type="time" id="timeInput" value="20:00">
+    </div>
+    <div class="ctrl-group">
+      <label>Source time zone</label>
+      <select id="tzSelect">
+        <option value="ET">Eastern (ET)</option>
+        <option value="CT">Central (CT)</option>
+        <option value="MT">Mountain (MT)</option>
+        <option value="AZ">Arizona (MT no DST)</option>
+        <option value="PT">Pacific (PT)</option>
+        <option value="AKT">Alaska (AKT)</option>
+        <option value="HT">Hawaii (HT)</option>
+        <option value="AST">Atlantic (AST)</option>
+        <option value="SST">Samoa (SST)</option>
+        <option value="CHST">Chamorro (CHST)</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Time mode</label>
+      <div class="toggle-wrap">
+        <div class="toggle-track" id="dstToggle" onclick="toggleDST()">
+          <div class="toggle-thumb"></div>
+        </div>
+        <div>
+          <div class="toggle-label" id="dstLabel">Standard time</div>
+          <div class="dst-note" id="dstNote">DST off</div>
+        </div>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <label>&nbsp;</label>
+      <button class="copy-btn" onclick="copyAll()">Copy all times ↗</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-label">Continental U.S.</p>
+  <div id="tzGridMain"></div>
+
+  <p class="section-label">U.S. Territories</p>
+  <div class="tz-grid" id="tzGridTerritories"></div>
+</div>
+
+<script>
+let isDST = false;
+
+const MAIN_ZONES = [
+  { id: "ET",  label: "Eastern",  abbr: "ET",  stdOffset: 0,  dstOffset: 1,  obsDST: true  },
+  { id: "CT",  label: "Central",  abbr: "CT",  stdOffset: -1, dstOffset: 0,  obsDST: true  },
+  { id: "MT",  label: "Mountain", abbr: "MT",  stdOffset: -2, dstOffset: -1, obsDST: true,  sub: "AZ" },
+  { id: "AZ",  label: "Arizona",  abbr: "MT",  stdOffset: -2, dstOffset: -2, obsDST: false, note: "No DST — always MT", isAZ: true },
+  { id: "PT",  label: "Pacific",  abbr: "PT",  stdOffset: -3, dstOffset: -2, obsDST: true  },
+  { id: "AKT", label: "Alaska",   abbr: "AKT", stdOffset: -4, dstOffset: -3, obsDST: true  },
+];
+
+const TERRITORY_ZONES = [
+  { id: "AST",  label: "Atlantic", abbr: "AST",  stdOffset: 1,  dstOffset: 1,  obsDST: false, note: "Puerto Rico & USVI" },
+  { id: "HT",   label: "Hawaii",   abbr: "HT",   stdOffset: -5, dstOffset: -5, obsDST: false, note: "Hawaii" },
+  { id: "SST",  label: "Samoa",    abbr: "SST",  stdOffset: -6, dstOffset: -6, obsDST: false, note: "American Samoa" },
+  { id: "CHST", label: "Chamorro", abbr: "CHST", stdOffset: 10, dstOffset: 10, obsDST: false, note: "Guam & CNMI" },
+];
+
+const ALL_ZONES = [...MAIN_ZONES, ...TERRITORY_ZONES];
+
+function getOffset(z) { return isDST && z.obsDST ? z.dstOffset : z.stdOffset; }
+
+function formatTime(totalMins) {
+  let day = "";
+  if (totalMins < 0) { totalMins += 1440; day = "prev day"; }
+  else if (totalMins >= 1440) { totalMins -= 1440; day = "next day"; }
+  const h24 = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  const ampm = h24 >= 12 ? "PM" : "AM";
+  let h = h24 % 12; if (h === 0) h = 12;
+  return { h, m: String(m).padStart(2, "0"), ampm, day };
+}
+
+function buildCard(z, etStdMins, src, isSubCard) {
+  const totalMins = etStdMins + getOffset(z) * 60;
+  const { h, m, ampm, day } = formatTime(totalMins);
+  const isSource = z.id === src;
+  const noDSTBadge = (!z.obsDST && isDST && !z.isAZ) ? '<span class="no-dst-badge">no DST</span>' : '';
+  const card = document.createElement("div");
+  let classes = "tz-card";
+  if (isSource) classes += " source";
+  if (isSubCard) classes += " sub";
+  card.className = classes;
+  let noteHtml = z.note ? `<br><span style="font-size:10px;color:var(--color-text-secondary);font-weight:400;">${z.note}</span>` : "";
+  card.innerHTML = `
+    ${isSource ? '<div class="badge">source</div>' : ''}
+    <p class="tz-label">${z.isAZ ? "AZ" : z.abbr}${noDSTBadge}</p>
+    <p class="tz-name">${z.label}${noteHtml}</p>
+    <p class="tz-time">${h}:${m}<span class="tz-ampm">${ampm}</span></p>
+    <p class="tz-day">${day || '\u00a0'}</p>
+  `;
+  return card;
+}
+
+function render() {
+  const src = document.getElementById("tzSelect").value;
+  const timeVal = document.getElementById("timeInput").value;
+  if (!timeVal) return;
+  const [hh, mm] = timeVal.split(":").map(Number);
+  const srcMins = hh * 60 + mm;
+  const srcZone = ALL_ZONES.find(z => z.id === src);
+  const etStdMins = srcMins - getOffset(srcZone) * 60;
+
+  const mainContainer = document.getElementById("tzGridMain");
+  mainContainer.innerHTML = "";
+  const mainGrid = document.createElement("div");
+  mainGrid.className = "tz-grid";
+
+  MAIN_ZONES.forEach(z => {
+    if (z.isAZ) return;
+    const card = buildCard(z, etStdMins, src, false);
+    if (z.id === "MT") {
+      const azZone = MAIN_ZONES.find(x => x.isAZ);
+      const azCard = buildCard(azZone, etStdMins, src, true);
+      const wrapper = document.createElement("div");
+      wrapper.style.cssText = "display:flex;flex-direction:column;gap:8px;";
+      const azLabel = document.createElement("div");
+      azLabel.style.cssText = "font-size:10px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.05em;padding-left:10px;";
+      azLabel.textContent = isDST ? "↳ Arizona (differs)" : "↳ Arizona (same)";
+      wrapper.appendChild(card);
+      wrapper.appendChild(azLabel);
+      wrapper.appendChild(azCard);
+      mainGrid.appendChild(wrapper);
+    } else {
+      mainGrid.appendChild(card);
+    }
+  });
+
+  mainContainer.appendChild(mainGrid);
+  document.getElementById("tzGridTerritories").innerHTML = "";
+  TERRITORY_ZONES.forEach(z => document.getElementById("tzGridTerritories").appendChild(buildCard(z, etStdMins, src, false)));
+}
+
+function toggleDST() {
+  isDST = !isDST;
+  document.getElementById("dstToggle").classList.toggle("on", isDST);
+  document.getElementById("dstLabel").textContent = isDST ? "Daylight saving time" : "Standard time";
+  document.getElementById("dstNote").textContent = isDST ? "DST on — AZ, HI & territories unchanged" : "DST off";
+  render();
+}
+
+document.getElementById("timeInput").addEventListener("input", render);
+document.getElementById("tzSelect").addEventListener("change", render);
+render();
+
+function copyAll() {
+  const src = document.getElementById("tzSelect").value;
+  const timeVal = document.getElementById("timeInput").value;
+  if (!timeVal) return;
+  const [hh, mm] = timeVal.split(":").map(Number);
+  const srcMins = hh * 60 + mm;
+  const srcZone = ALL_ZONES.find(z => z.id === src);
+  const etStdMins = srcMins - getOffset(srcZone) * 60;
+  const mode = isDST ? "Daylight Saving Time" : "Standard Time";
+  const lines = [`Mode: ${mode}`, ""];
+  ALL_ZONES.forEach(z => {
+    const totalMins = etStdMins + getOffset(z) * 60;
+    const { h, m, ampm, day } = formatTime(totalMins);
+    const noDST = (!z.obsDST && isDST) ? " (no DST)" : "";
+    const dispAbbr = z.isAZ ? "AZ" : z.abbr;
+    lines.push(`${z.label} (${dispAbbr})${noDST}: ${h}:${m} ${ampm}${day ? " (" + day + ")" : ""}`);
+  });
+  navigator.clipboard.writeText(lines.join("\n")).then(() => {
+    const btn = document.querySelector(".copy-btn");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy all times ↗", 1500);
+  });
+}
+</script>
+</body>
+</html>
